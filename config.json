@@ -1,0 +1,197 @@
+{
+    "twitter": {
+        "api_key": "pH3udYp24DTmSjAi9nA9CRsul",
+        "api_secret_key": "ire3OQMiF2zKpLm4RZiSjK0rqb6PosCkuBZalGCT22LY2G3o0r",
+        "access_token": "1133849246967447552-w4mHAfI7SoOhk5i1qwAoyyJ9eWFHDT",
+        "access_token_secret": "1PoCigt9dL5hEFv7QB6tH4kAk8tVQgmsH8IwQWY9IEFRn",
+        "bearer_token": "AAAAAAAAAAAAAAAAAAAAAB3qxAEAAAAABrb8ycnXTbk3b51Q3DrOqBr%2Fd4Q%3D2Fpm0O2t30kTt4eHRuNbJx1a23VNucvuVNqtZEwbUDyuIjZ98d",
+        "user_id": "1133849246967447552"
+    },
+    "openai": {
+        "api_key": "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"
+    },
+    "api": {
+        "request_delay": 2
+    },
+    "schedule": {
+        "generate_tweet_interval": 7500,
+        "post_tweet_interval": 7800,
+        "generate_templates_interval": 18000,
+        "generate_keywords_interval": 10800,
+        "generate_keyword_templates_interval": 10700,
+        "update_metrics_interval": 43200,
+        "comment_on_tweets_interval": 9500,
+        "generate_ideas_interval": 21600,
+        "analyze_ideas_interval": 86400,
+        "backup_database_interval": 43200,
+        "daily_report_interval": 86400,
+        "like_relevant_tweets_interval": 7000,
+        "like_commented_tweets_interval": 8000,
+        "analyze_performance_interval": 3600,
+        "retweet_task_interval": 10000,
+        "analyze_successful_tweets_interval": 3600,
+        "analyze_keywords_interval": 3600,
+        "transform_recommendations_interval": 7200,
+        "max_comments_per_cycle": 3,
+        "max_likes_per_cycle": 3,
+        "max_retweets_per_cycle": 1,
+        "max_follows_per_cycle": 2,
+        "follow_accounts_interval": 2400,
+        "comment_delay": 30,
+        "max_retries": 5,
+        "retry_delay": 10
+    },
+    "generation": {
+        "max_tweet_length": 250
+    },
+    "search": {
+        "max_results": 10,
+        "total_limit": 50
+    },
+    "criteria": {
+        "keywords": [
+            "1 yescoin",
+            "6 rippleevents",
+            "5 memecompetition",
+            "4 blockchaintools",
+            "3 cryptoai",
+            "2 xplan",
+            "8 financialsupport",
+            "7 coinscamalert",
+            "10 cryptogifts",
+            "DigitalCurrencyGrowth",
+            "9 tonblockchain",
+            "9 positiveimpact",
+            "9 cointir",
+            "8 financialscams",
+            "8 coinats",
+            "7 scamalert",
+            "7 rippleevents",
+            "5 rippleevents",
+            "4 memecompetition",
+            "3 selfdevelopment",
+            "3 blockchaintools",
+            "2 financialfreedom",
+            "1 cryptocurrency",
+            "#SelfDevelopmentCrypto",
+            "#FinancialFreedomJourney",
+            "#CryptoWealthGrowth",
+            "#CryptoSelfGrowthJourney",
+            "#CryptoSelfGrowth",
+            "#CryptoGrowthJourney",
+            "#CryptoFinanceFreedom",
+            "#Blockchain_FinancialFreedom",
+            "#AIinCryptoDevelopment",
+            "Welcome to #EthereumGalaxy \ud83c\udf0c",
+            "Welcome to #BlockchainGrowth \ud83c\udf0c",
+            "Welcome to #BitcoinUniverse \ud83c\udf0c",
+            "WealthyMindsetCrypto",
+            "WealthyCryptoMindset",
+            "WealthMindset",
+            "WealthEvolution",
+            "WealthBuildingCryptoMindset",
+            "ThankYouCryptoInvestors",
+            "SelfmadeInvestor",
+            "SelfmadeCrypto",
+            "SelfInvestmentCrypto",
+            "SelfImprovementCryptoTrade",
+            "SelfGrowth_BitcoinInvesting",
+            "SelfGrowthInvesting",
+            "SelfGrowthCrypto",
+            "SelfDevelopment_CryptoAI",
+            "SelfDevelopmentCryptoCommunity"
+        ],
+        "max_followers": 50000000,
+        "min_followers": 5000,
+        "exclude_keywords": [
+            "scam",
+            "fake"
+        ],
+        "retweet_metrics": {
+            "like_count": 100,
+            "impression_count": 500,
+            "retweet_count": 50
+        },
+        "like_criteria": {
+            "min_retweet_count": 50,
+            "min_reply_count": 5,
+            "min_like_count": 0,
+            "min_impression_count": 100
+        }
+    },
+    "openers": [
+        "Unlock your potential",
+        "Start your journey",
+        "Take the first step",
+        "Explore new horizons",
+        "Transform your future",
+        "Empower yourself today",
+        "Redefine your limits",
+        "Build your legacy",
+        "Chase the vision",
+        "Seize the moment",
+        "Step into freedom",
+        "Discover your edge",
+        "Fuel your growth",
+        "Dream it, do it",
+        "Break the cycle",
+        "Master your mindset",
+        "Navigate the future",
+        "Invest in you",
+        "Embrace the change",
+        "Find your clarity",
+        "Scale new heights",
+        "Claim your independence",
+        "Unlock the door",
+        "Own your destiny",
+        "Dare to innovate",
+        "Achieve beyond limits"
+    ],
+    "prompts": {
+        "promotional_tweets": [
+            "Write an inspirational tweet about self-development and financial independence. Include motivational and philosophical ideas.",
+            "Create a tweet about the importance of self-growth and achieving life goals through financial literacy. Avoid promotion.",
+            "Write a tweet on how blockchain technology inspires financial freedom and independence. Do not promote any token.",
+            "Write an inspirational tweet about how financial independence is key to unlocking personal freedom and achieving dreams. Avoid promotional language."
+        ],
+        "general_tweets": [
+            "Create a tweet discussing the role of self-discipline in achieving financial goals and personal growth. Use a motivational tone.",
+            "Write a tweet about how small, consistent financial habits can lead to big changes in personal development and life achievements.",
+            "Create a tweet exploring the connection between embracing challenges and reaching financial independence. Use a thoughtful and philosophical tone.",
+            "Write a tweet about the importance of setting clear financial and personal goals to create a more fulfilling and meaningful life."
+        ],
+        "promotional_comments": [
+            "Reflect on the sentiment of this tweet: \"{{tweet_text}}\" and craft a motivational reply, not longer than 100 characters."
+        ],
+        "general_comments": [
+            "Analyze the sentiment and meaning of this tweet: \"{{tweet_text}}\". Create a response, not longer than 100 characters."
+        ]
+    },
+    "telegram": {
+        "bot_token": "7589440828:AAGkEf76njjV0_8R0x5DU4aOg1IRCYu_MOo",
+        "admin_chat_id": "-4674597259"
+    },
+    "hashtags": [
+        "#CryptoGrowth",
+        "#SelfDevelopment",
+        "#FinancialFreedom",
+        "#ElonToMars",
+        "#MemeCoins",
+        "#Success",
+        "#PersonalGrowth",
+        "#WealthBuilding",
+        "#Motivation",
+        "#CryptoCommunity",
+        "#Bitcoin",
+        "#Tothemoon",
+        "#Pumpfun",
+        "#Cryptoinvestor",
+        "#cryptoai",
+        "#cryptoassets",
+        "#altcoins",
+        "#memes",
+        "XRP",
+        "AI",
+        "#tokenbar"
+    ]
+}
