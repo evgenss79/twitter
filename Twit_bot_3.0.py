@@ -15,10 +15,20 @@ import shutil
 from datetime import datetime, timedelta
 from functools import partial
 import functools
+import os
+import aiohttp
+import asyncio
+import aiosqlite
+from asyncio import Lock
+import aiohttp
+from cachetools import TTLCache
 
 
 # Настройка ротации логов
 log_file = "bot.log"
+
+# Инициализация блокировки для базы данных
+db_lock = Lock()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,15 +42,20 @@ logging.info("Logging is set up. Log file: %s", log_file)
 
 
 # Загружаем конфигурацию
-def load_config(file_path="config.json"):
+def load_config():
+    config_path = 'config.json'
+    if not os.path.exists(config_path):
+        logging.error(f"Config file not found: {config_path}")
+        return {}
     try:
-        with open(file_path, "r") as config_file:
+        with open(config_path, 'r') as config_file:
             return json.load(config_file)
+    except json.JSONDecodeError as e:
+        logging.error(f"Error parsing config file: {e}")
+        return {}
     except Exception as e:
-        logging.error(f"Failed to load configuration: {e}")
-        raise
-
-config = load_config()
+        logging.error(f"Error loading config: {e}")
+        return {}
 
 def reload_config():
     """
@@ -83,25 +98,23 @@ def initialize_oauth_session():
         return None
 
 # Унифицированная отправка запросов
-def send_twitter_request(session, url, method="GET", params=None, data=None):
-    try:
-        # Задержка между запросами (например, 1 секунда)
-        time.sleep(1)
-        
-        if method.upper() == "GET":
-            response = session.get(url, params=params)
-        elif method.upper() == "POST":
-            response = session.post(url, json=data)
-        else:
-            raise ValueError(f"Unsupported HTTP method: {method}")
-        
-        check_rate_limit(response)
-        
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error during Twitter API request: {e}")
-        return None
+async def send_twitter_request(method, url, **kwargs):
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.request(method, url, **kwargs) as response:
+                if response.status == 429:  # Rate limit exceeded
+                    retry_after = int(response.headers.get('Retry-After', 60))
+                    logging.warning(f"Rate limit exceeded. Retrying after {retry_after} seconds.")
+                    await asyncio.sleep(retry_after)
+                    return await send_twitter_request(method, url, **kwargs)
+                response.raise_for_status()
+                return await response.json()
+        except aiohttp.ClientResponseError as e:
+            logging.error(f"Twitter API request failed: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error in Twitter API request: {e}")
+            return None
 
 def setup_database():
     """
@@ -175,6 +188,19 @@ def setup_database():
             logging.info("Database setup completed successfully.")
     except Exception as e:
         logging.error(f"Error setting up database: {e}")
+
+async def execute_db_query(query, params=(), fetch=False, commit=False):
+    async with db_lock:
+        try:
+            async with aiosqlite.connect('twitter_bot.db') as conn:
+                async with conn.execute(query, params) as cursor:
+                    if commit:
+                        await conn.commit()
+                    if fetch:
+                        return await cursor.fetchall()
+        except aiosqlite.Error as e:
+            logging.error(f"Database error: {e}")
+            return None
 
 def get_unpublished_tweet():
     """
@@ -628,6 +654,7 @@ def search_tweets(session):
 
     return tweets
 
+
 # Комментирование твита
 def is_already_commented(tweet_id):
     """
@@ -673,7 +700,7 @@ def save_comment_to_db(tweet_id, comment_id):
     except Exception as e:
         logging.error(f"Unexpected error in save_comment_to_db: {e}")
 
-def post_comment(session, tweet_id, comment_text):
+
     """
     Публикует комментарий к указанному твиту, проверяет на дубликаты
     и сохраняет результат в базу данных.
@@ -847,57 +874,40 @@ def get_original_tweet(session, tweet_id):
         logging.error(f"Error retrieving original tweet for ID {tweet_id}: {e}")
         return None
 
-def generate_comment(session, tweet_id):
-    """
-    Генерирует комментарий к указанному твиту, учитывая его текст или текст исходного твита.
+comment_cache = TTLCache(maxsize=100, ttl=3600)  # Кэш на 1 час
 
-    Args:
-        tweet_id (str): ID твита, к которому требуется сгенерировать комментарий.
+async def generate_comment(session, tweet_id):
+    if tweet_id in comment_cache:
+        return comment_cache[tweet_id]
 
-    Returns:
-        str: Сгенерированный комментарий или None в случае ошибки.
-    """
     try:
-         # Получаем исходный твит или текущий текст
-        original_tweet = get_original_tweet(session, tweet_id)
+        original_tweet = await get_original_tweet(session, tweet_id)
         if not original_tweet:
             return None
 
         tweet_text = original_tweet["text"]
-
-        # Определяем категорию комментария на основе длины текста твита
         comment_category = "general_comments" if len(tweet_text) < 50 else "promotional_comments"
-        template = random.choice(config["prompts"][comment_category])  # Берем шаблон из конфигурации
+        template = random.choice(config["prompts"][comment_category])
 
-        # Формируем подсказку для GPT
-        prompt = (
-            f"{template.replace('{{tweet_text}}', tweet_text)}\n\n"
-            "Please generate a concise and engaging comment based on this template. The comment must not exceed 100 characters."
-        )
-
-        # Генерация комментария через OpenAI API
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a bot that writes relevant and engaging Twitter replies."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=50  # Устанавливаем ограничение на длину в токенах
-        )
-
-        comment = response["choices"][0]["message"]["content"].strip()
-
-        # Проверяем длину сгенерированного комментария
-        max_length = config.get("generation", {}).get("max_comment_length", 100)  # Берем ограничение из конфигурации
-        if len(comment) > max_length:
-            logging.warning(f"Generated comment exceeds {max_length} characters: {comment}. Discarding.")
-            return None
-
-        logging.info(f"Generated comment for tweet ID {tweet_id}: {comment}")
-        return comment
+        prompt = f"{template}\n\nTweet: {tweet_text}\n\nComment:"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://api.openai.com/v1/engines/text-davinci-002/completions",
+                headers={"Authorization": f"Bearer {openai.api_key}"},
+                json={"prompt": prompt, "max_tokens": 100, "n": 1, "stop": None, "temperature": 0.7}
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    comment = data['choices'][0]['text'].strip()
+                    clean_comment = clean_unicode(comment)
+                    comment_cache[tweet_id] = clean_comment
+                    return clean_comment
+                else:
+                    logging.error(f"OpenAI API error: {response.status}")
+                    return None
     except Exception as e:
-        logging.error(f"Error generating comment for tweet ID {tweet_id}: {e}")
+        logging.error(f"Error generating comment: {e}")
         return None
 
 def comment_on_tweets(session):
@@ -1528,14 +1538,21 @@ def check_rate_limit(response):
         logging.warning(f"Rate limit reached. Sleeping for {wait_time} seconds.")
         time.sleep(max(wait_time, 1))
 
-def safe_task(task):
-    def wrapper():
-        try:
-            task()
-        except Exception as e:
-            func_name = task.func.__name__ if isinstance(task, functools.partial) else task.__name__
-            logging.error(f"Task {func_name} failed: {e}")
-    return wrapper
+def safe_task(max_retries=3, retry_delay=1):
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as e:
+                    logging.error(f"Error in {func.__name__} (attempt {attempt + 1}/{max_retries}): {e}")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(retry_delay)
+                    else:
+                        logging.error(f"Max retries reached for {func.__name__}")
+        return wrapper
+    return decorator
 
 def backup_database():
     try:
